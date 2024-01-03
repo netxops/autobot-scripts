@@ -1,0 +1,28 @@
+- cmd: display current-configuration
+  group_map:
+    - name: 主机名
+      group: system_name
+    - name: 日志主机
+      group: loging_host
+    - name: Ntp
+      group: ntp_server
+    - name: 本地时间
+      group: is_local_time
+  regex: 
+    - sysname\s(?P<system_name>\S+)
+    - info-center loghost\s(?P<loging_host>(\d+\.){3}\d+)(\s(?P<is_local_time>local-time))?
+    - ntp-service unicast-server\s(?P<ntp_server>(\d+\.){3}\d+)
+
+- cmd: display version
+  group_map:
+    - name: 版本
+      group: version
+    - name: 软件
+      group: software
+    - name: 型号
+      group: mode
+    - name: 启动时间
+      group: uptime
+  regex:
+    - VRP \(R\) software, Version (?P<version>[\d\.]+) \(\S+ (?P<software>\S+)\)
+    - (?P<mode>\S+) Routing Switch uptime is (?P<uptime>.*)

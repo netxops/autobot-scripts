@@ -1,0 +1,9 @@
+{
+  "type": "playbook",
+  "desc": "Redis 5.0.12 部署脚本",
+  "file": "playbook.yml",
+  "args": [
+  ],
+  "resource": []
+}
+

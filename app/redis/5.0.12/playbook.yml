@@ -1,0 +1,26 @@
+- hosts: all
+  become: yes
+  gather_facts: false
+  remote_user: root
+  become_method: sudo
+
+  tasks:
+    - name: Install EPEL repository
+      yum:
+        name: epel-release
+        state: present
+      register: epel_install_output
+
+    - name: Install Redis package
+      yum:
+        name: redis
+        state: present
+        version: "5.0.12-2.el8"
+      register: redis_install_output
+
+    - name: Start Redis service
+      service:
+        name: redis
+        state: started
+        enabled: true
+      register: redis_start_output

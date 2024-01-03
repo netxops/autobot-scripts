@@ -1,0 +1,28 @@
+{
+  "type": "playbook",
+  "desc": "RHEL巡检脚本",
+  "file": "rhel_check.yml",
+  "args": [
+      {
+      "label": "提权密码",
+      "type": "password",
+      "key": "BECOME_PASSWORD",
+      "required": false,
+      "rule": "",
+      "default": "",
+      "desc": "请输入提权密码"
+      }
+  ],
+  "resource": [
+    "conf/demsg_ex_log.sh",
+    "conf/file_sys_usage_rate.sh",
+    "conf/log_dir_size.sh",
+    "conf/mcelog_ex_log.sh",
+    "conf/nic_status.sh",
+    "conf/non_secure_process.sh",
+    "conf/root_fs_inode.sh",
+    "conf/secure_ex_log.sh",
+    "conf/spool_dir_size.sh",
+    "conf/swap_usage_rate.sh"
+  ]
+}

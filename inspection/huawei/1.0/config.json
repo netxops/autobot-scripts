@@ -1,0 +1,10 @@
+{
+    "type": "switch_inspection",
+    "desc": "交换机脚本",
+    "file": "huawei_check.yml",
+    "args": [
+    ],
+    "resource": []
+  }
+  
+  

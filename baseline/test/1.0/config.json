@@ -1,0 +1,10 @@
+{
+  "type": "playbook",
+  "desc": "基线扫描脚本",
+  "file": "baseline_check.yml",
+  "args": [],
+  "resource": [
+    "conf/baseline.sh"
+  ]
+}
+

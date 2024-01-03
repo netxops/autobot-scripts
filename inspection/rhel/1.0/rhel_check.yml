@@ -1,0 +1,245 @@
+- hosts: all
+  gather_facts: false
+  become: true
+  become_user: root
+  become_method: sudo
+  vars:
+    # ansible_become_password: "{{BECOME_PASSWORD}}"
+    ansible_become_password: "admin@123"
+
+  tasks:
+    - name: 主机名
+      shell: hostname
+      register: hostname
+      ignore_errors: true
+
+    - name: 主机型号
+      shell: "dmidecode -t system |egrep -i 'manufacturer|product name' |awk -F: '{ print $2 }' |xargs"
+      register: host_model
+      ignore_errors: true
+
+    - name: 系统版本
+      shell: cat /etc/redhat-release
+      register: sys_ver
+      ignore_errors: true
+
+    - name: 内核版本
+      shell: uname -rm
+      register: kernel_version
+      ignore_errors: true
+
+    - name: 序列号
+      shell: dmidecode -t system | grep 'Serial Number' | awk '{print $3}'
+      register: serial_number
+      ignore_errors: true
+
+    - name: 系统语言
+      shell: echo $LANG
+      register: lang
+      ignore_errors: true
+
+    - name: 系统时间
+      shell: date +"%Y-%m-%d %H:%M:%S"
+      register: date
+      ignore_errors: true
+
+    - name: 系统时区
+      shell: date +"%Z %z"
+      register: timezone
+      ignore_errors: true
+
+    - name: 运行级别
+      shell: runlevel |awk '{ print $NF }'
+      register: run_level
+      ignore_errors: true
+
+    - name: 系统启动时长
+      shell: uptime | awk -F',' '{sub(/.*up /,"",$1);print $1'}
+      register: uptime
+      ignore_errors: true
+
+    - name: 系统上次重启时间
+      shell: last reboot | head -1 | awk '{print $5,$6,$7,$8,$10}'
+      register: last_reboot
+      ignore_errors: true
+
+    - name: 系统上次关机时间
+      shell: last -x | grep shutdown | head -1 | awk '{print $5,$6,$7,$8,$10}'
+      register: last_shutdown
+      ignore_errors: true
+
+    - name: IP地址
+      shell: ip -4 addr |grep 'global' |grep -v vir|awk '{ print $2 }'|grep -v '/32'
+      register: ip_address
+      ignore_errors: true
+
+    - name: 默认网关
+      shell: ip route | grep default &>/dev/null && ip route | grep default | awk '{print $3}'
+      register: default_gtw
+      ignore_errors: true
+
+    - name: DNS
+      shell: cat /etc/resolv.conf | grep nameserver | uniq | awk '{print $2}'
+      register: dns
+      ignore_errors: true
+
+    - name: CPU使用率
+      shell: top -b -n 1 |grep  Cpu |awk -F'id' '{ print $1 }' |awk -F',' '{print $NF}' |awk -F'[%]+' '{printf"%.2f%%\n", (100-$1)}'
+      register: cpu_usage_rate
+      ignore_errors: true
+
+    - name: 内存使用率
+      shell: free | grep Mem | awk '{print $3/$2 * 100.0}'
+      register: mem_usage_rate
+      ignore_errors: true
+
+    - name: 分区信息
+      shell: df -h|grep -vE 'tmpfs|none'
+      register: disk_info
+      ignore_errors: true
+
+    - name: 文件系统使用率
+      script: conf/file_sys_usage_rate.sh
+      register: file_sys_usage_rate
+      ignore_errors: true
+
+    - name: 根inode使用率
+      script: conf/root_fs_inode.sh
+      register: root_fs_inode
+      ignore_errors: true
+
+    - name: log目录大小
+      script: conf/log_dir_size.sh
+      register: log_dir_size
+      ignore_errors: true
+
+    - name: spool目录大小
+      script: conf/spool_dir_size.sh
+      register: spool_dir_size
+      ignore_errors: true
+
+    - name: Swap使用率
+      script: conf/swap_usage_rate.sh
+      register: swap_usage_rate
+      ignore_errors: true
+
+    - name: 执行最多的十个历史命令
+      shell: sed -e 's/|/\n/g' ~/.bash_history|cut -d '' -f 1|sort|uniq -c|sort -nr|head
+      register: history_cmd_top10
+      ignore_errors: true
+
+    - name: CPU使用率前十进程
+      shell: top -d 1 -n 1 -b | column -t | awk 'NR>=7 && NR<=15'
+      register: cpu_ten_top
+      ignore_errors: true
+
+    - name: 进程数
+      shell: top -d 1 -n 1 -b | awk 'NR==2{print $2}'
+      register: cpu_processors
+      ignore_errors: true
+
+    - name: 正在运行进程数
+      shell: top -d 1 -n 1 -b | awk 'NR==2{print $4}'
+      register: cpu_run_processors
+      ignore_errors: true
+
+    - name: 休眠进程数
+      shell: top -d 1 -n 1 -b | awk 'NR==2{print $6}'
+      register: cpu_sleep_processors
+      ignore_errors: true
+
+    - name: 停止进程数
+      shell: top -d 1 -n 1 -b | awk 'NR==2{print $8}'
+      register: cpu_stop_processors
+      ignore_errors: true
+
+    - name: 僵尸进程数
+      shell: top -d 1 -n 1 -b | awk 'NR==2{print $10}'
+      register: cpu_stop_processors
+      ignore_errors: true
+
+    - name: 非安全进程
+      script: conf/non_secure_process.sh
+      register: non_secure_process
+      ignore_errors: true
+
+    - name: 网络异常数据包
+      shell: netstat -s |egrep -i 'error|dropped' |grep -i LISTEN
+      register: exception_net_pkg
+      ignore_errors: true
+    
+    - name: 当前允许最大FD数
+      shell: cat /proc/sys/fs/file-nr | awk '{print $3}'
+      register: os_max_fd
+      ignore_errors: true
+
+    - name: 已打开FD数
+      shell: cat /proc/sys/fs/file-nr | awk '{print $1}'
+      register: os_open_fd
+      ignore_errors: true
+
+    - name: 单进程运行打开FD数
+      shell: ulimit -n
+      register: os_sig_fd
+      ignore_errors: true
+
+    - name: 可登录用户
+      shell: cat /etc/passwd | awk -F':' '$NF !~/nologin|sync|shutdown|halt/ {print $1}'
+      register: os_user
+      ignore_errors: true
+
+    - name: 可登录用户数
+      shell: cat /etc/passwd | awk -F':' '$NF !~/nologin|sync|shutdown|halt/ {print $1}' | wc -l
+      register: os_user_num
+      ignore_errors: true
+
+    - name: SELinux
+      shell: getenforce
+      register: selinux
+      ignore_errors: true
+
+    - name: 防火墙状态
+      shell: service firewalld status &>/dev/null | grep "running" && echo on || echo off
+      register: firewall_status
+      ignore_errors: true
+
+    - name: 密码复杂度配置
+      shell: cat /etc/pam.d/system-auth |egrep 'pam_pwquality.so|pam_cracklib.so'
+      register: pwd_complexity_conf
+      ignore_errors: true
+    
+    - name: passwd文件权限
+      shell: stat -c %a /etc/passwd
+      register: passwd_stat
+      ignore_errors: true
+
+    - name: dmesg异常日志
+      script: conf/demsg_ex_log.sh
+      register: demsg_ex_log
+      ignore_errors: true
+
+    - name: mcelog异常日志
+      script: conf/mcelog_ex_log.sh
+      register: mcelog_ex_log
+      ignore_errors: true
+      
+    - name: secure异常日志
+      script: conf/secure_ex_log.sh
+      register: secure_ex_log
+      ignore_errors: true
+      
+    - name: lsblk信息
+      shell: lsblk
+      register: lsblk_info
+      ignore_errors: true
+      
+    - name: ulimt配置
+      shell: cat /etc/security/limits.conf  |grep -v ^#
+      register: ulimits_conf
+      ignore_errors: true
+
+    - name: 网卡链路状态
+      script: conf/nic_status.sh
+      register: nic_status
+      ignore_errors: true
+
